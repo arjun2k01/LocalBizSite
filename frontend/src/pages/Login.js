@@ -1,61 +1,53 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-function Login({ apiUrl }) {
+function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { login, loading, error } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
-    setLoading(true);
-
-    try {
-      const response = await axios.post(`${apiUrl}/auth/login`, {
-        email,
-        password,
-      });
-      setMessage('Login successful! Token: ' + response.data.token?.substring(0, 20) + '...');
-      localStorage.setItem('token', response.data.token);
-      setEmail('');
-      setPassword('');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-    } finally {
-      setLoading(false);
+    const result = await login(email, password);
+    if (result.success) {
+      navigate('/businesses');
     }
   };
 
   return (
-    <div className="container">
-      <div className="card" style={{ maxWidth: '400px', margin: '20px auto' }}>
-        <h2>Login</h2>
-        <form onSubmit={handleSubmit}>
+    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
+      <h1>Login</h1>
+      {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '15px' }}>
+          <label>Email: </label>
           <input
             type="email"
-            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
           />
+        </div>
+        <div style={{ marginBottom: '15px' }}>
+          <label>Password: </label>
           <input
             type="password"
-            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
           />
-          <button type="submit" className="button" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-        {error && <p className="error">{error}</p>}
-        {message && <p className="success">{message}</p>}
-      </div>
+        </div>
+        <button type="submit" disabled={loading} style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
+      </form>
+      <p style={{ marginTop: '15px' }}>
+        Don't have an account? <a href="/signup">Sign up here</a>
+      </p>
     </div>
   );
 }

@@ -6,12 +6,13 @@ import Home from './pages/Home';
 import BusinessList from './pages/BusinessList';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import { AuthProvider } from './context/AuthContext';
 
 const API_URL = 'https://localbizsite.onrender.com/api';
 
 function App() {
   return (
-    <Router>
+    <AuthProvider></AuthProvider<Router>
       <div className="App">
         <nav className="navbar">
           <div className="nav-container">
@@ -42,6 +43,7 @@ function App() {
         </Routes>
       </div>
     </Router>
+      </AuthProvider>
   );
 }
 
