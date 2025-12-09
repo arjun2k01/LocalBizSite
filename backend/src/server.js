@@ -46,6 +46,7 @@ cd ../public && cat > index.html << 'EOFHTML'
 </html>
 EOFHTML
 cd /workspaces/LocalBizSite && git add -A && git commit -m 'Add complete React frontend with authentication, business listing, and responsive design' && git push
+cat package.json
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
