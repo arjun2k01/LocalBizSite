@@ -1,115 +1,111 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const AuthContext = createContext();
 const API_URL = process.env.REACT_APP_API_URL || 'https://localbizsite.onrender.com/api';
+
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('authToken') || null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Configure axios to include token in requests
+  // Check if user is logged in on mount
   useEffect(() => {
+    const token = localStorage.getItem('token');
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      localStorage.setItem('authToken', token);
+      validateToken(token);
     } else {
-      delete axios.defaults.headers.common['Authorization'];
-      localStorage.removeItem('authToken');
-    }
-  }, [token]);
-
-  // Validate token on app load
-  useEffect(() => {
-    const validateToken = async () => {
-      if (token) {
-        try {
-          const response = await axios.post(`${API_URL}/auth/validate-token`, { token });
-          if (response.data.valid) {
-            setUser(response.data.user);
-          } else {
-            setToken(null);
-            setUser(null);
-          }
-        } catch (err) {
-          console.log('Token validation failed, clearing auth state');
-          setToken(null);
-          setUser(null);
-        }
-      }
       setLoading(false);
-    };
-    validateToken();
+    }
   }, []);
 
-  const signup = async (email, password, fullName) => {
-    setError(null);
-    setLoading(true);
+  // Validate token with backend
+  const validateToken = async (token) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/signup`, {
-        email,
-        password,
-        fullName,
-      });
-      const newToken = response.data.token;
-      setToken(newToken);
-      setUser(response.data.user);
-      return { success: true, user: response.data.user };
+      const response = await axios.post(`${API_URL}/auth/validate-token`, { token });
+      if (response.data.valid) {
+        setUser(response.data.user);
+      } else {
+        localStorage.removeItem('token');
+      }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Signup failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
+      localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }
   };
 
+  // Signup function
+  const signup = async (fullName, email, password) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API_URL}/auth/signup`, {
+        name: fullName,
+        email,
+        password
+      });
+      
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        setUser(response.data.user);
+        return { success: true };
+      }
+    } catch (err) {
+      const message = err.response?.data?.error || err.message;
+      setError(message);
+      return { success: false, error: message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Login function
   const login = async (email, password) => {
     setError(null);
     setLoading(true);
     try {
       const response = await axios.post(`${API_URL}/auth/login`, {
         email,
-        password,
+        password
       });
-      const newToken = response.data.token;
-      setToken(newToken);
-      setUser(response.data.user);
-      return { success: true, user: response.data.user };
+      
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        setUser(response.data.user);
+        return { success: true };
+      }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Login failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
+      const message = err.response?.data?.error || err.message;
+      setError(message);
+      return { success: false, error: message };
     } finally {
       setLoading(false);
     }
   };
 
+  // Logout function
   const logout = async () => {
-    setLoading(true);
     try {
       await axios.post(`${API_URL}/auth/logout`);
     } catch (err) {
-      console.log('Logout error:', err);
+      console.error('Logout error:', err);
     } finally {
-      setToken(null);
+      localStorage.removeItem('token');
       setUser(null);
       setError(null);
-      setLoading(false);
     }
   };
 
   const value = {
     user,
-    token,
     loading,
     error,
     signup,
     login,
     logout,
-    isAuthenticated: !!token,
+    isAuthenticated: !!user
   };
 
   return (
