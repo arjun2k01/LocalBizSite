@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+const API_URL = 'https://localbizsite.onrender.com/api';
+
 function BusinessList({ apiUrl }) {
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +15,7 @@ function BusinessList({ apiUrl }) {
   const fetchBusinesses = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${apiUrl}/businesses`);
+      const response = await axios.get(`${API_URL}/businesses`);
       setBusinesses(response.data || []);
       setError(null);
     } catch (err) {
