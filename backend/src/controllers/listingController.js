@@ -1,0 +1,1 @@
+const Listing = require("../models/Listing"); exports.getListings = async (req, res) => { const listings = await Listing.find(); res.json({ success: true, data: listings }); }; exports.createListing = async (req, res) => { req.body.createdBy = req.user.id; const listing = await Listing.create(req.body); res.status(201).json({ success: true, data: listing }); };
